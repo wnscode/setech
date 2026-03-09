@@ -1,1 +1,531 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>세특 AI 코치</title>
+<style>
+  :root {
+    --p50:#f5f3ff;--p100:#ede9fe;--p200:#ddd6fe;--p300:#c4b5fd;
+    --p400:#a78bfa;--p500:#8b5cf6;--p600:#7c3aed;--p700:#6d28d9;
+    --g50:#f9fafb;--g100:#f3f4f6;--g200:#e5e7eb;--g300:#d1d5db;
+    --g400:#9ca3af;--g500:#6b7280;--g700:#374151;--g800:#1f2937;--g900:#111827;
+    --white:#fff;--r:12px;
+    --shadow:0 2px 12px rgba(139,92,246,.10);
+    --shadow-md:0 4px 24px rgba(139,92,246,.14);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Pretendard','Apple SD Gothic Neo','Noto Sans KR',sans-serif;
+    background:var(--p50);color:var(--g800);min-height:100vh}
 
+  .hdr{background:var(--white);border-bottom:1px solid var(--p100);padding:0 24px;height:56px;
+    display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;
+    box-shadow:0 1px 8px rgba(139,92,246,.07)}
+  .hdr-logo{font-size:17px;font-weight:700;color:var(--p600);letter-spacing:-.3px}
+  .hdr-right{display:flex;align-items:center;gap:14px}
+  .call-badge{display:none;align-items:center;gap:6px;background:var(--p50);border:1px solid var(--p200);
+    border-radius:20px;padding:4px 12px;font-size:13px;color:var(--p700);font-weight:500}
+  .call-badge.on{display:flex}
+  .call-dot{width:7px;height:7px;border-radius:50%;background:var(--p400)}
+
+  .wrap{max-width:1100px;margin:0 auto;padding:32px 20px}
+
+  .login-page{min-height:calc(100vh - 56px);display:flex;align-items:center;justify-content:center}
+  .login-page.hide{display:none}
+  .login-card{background:var(--white);border-radius:20px;padding:48px 40px;width:100%;max-width:400px;
+    box-shadow:var(--shadow-md);border:1px solid var(--p100)}
+  .login-icon{width:56px;height:56px;background:var(--p100);border-radius:16px;
+    display:flex;align-items:center;justify-content:center;font-size:26px;margin:0 auto 20px}
+  .login-title{font-size:22px;font-weight:700;color:var(--g900);text-align:center;margin-bottom:6px}
+  .login-sub{font-size:14px;color:var(--g400);text-align:center;margin-bottom:28px}
+
+  .fg{margin-bottom:14px}
+  .fl{display:block;font-size:13px;font-weight:600;color:var(--g700);margin-bottom:6px}
+  .fi,.fta{width:100%;padding:10px 14px;border:1.5px solid var(--g200);border-radius:var(--r);
+    font-size:14px;color:var(--g800);background:var(--white);transition:border-color .2s;
+    outline:none;font-family:inherit}
+  .fi:focus,.fta:focus{border-color:var(--p400);box-shadow:0 0 0 3px rgba(139,92,246,.10)}
+  .fta{resize:vertical;min-height:130px;line-height:1.6}
+
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;padding:11px 22px;
+    border-radius:var(--r);font-size:14px;font-weight:600;cursor:pointer;border:none;
+    transition:all .18s;font-family:inherit}
+  .btn-p{background:var(--p600);color:var(--white);width:100%}
+  .btn-p:hover{background:var(--p700);transform:translateY(-1px)}
+  .btn-p:disabled{background:var(--g300);cursor:not-allowed;transform:none}
+  .btn-o{background:var(--white);color:var(--p600);border:1.5px solid var(--p300);width:auto}
+  .btn-o:hover{background:var(--p50)}
+  .btn-g{background:transparent;color:var(--g500);font-size:13px;padding:7px 14px}
+  .btn-g:hover{color:var(--p600);background:var(--p50)}
+  .btn-sm{padding:7px 16px;font-size:13px;width:auto}
+
+  .main-page{display:none}
+  .main-page.on{display:block}
+
+  .wbar{background:var(--white);border:1px solid var(--p100);border-radius:var(--r);
+    padding:18px 24px;display:flex;align-items:center;justify-content:space-between;
+    margin-bottom:24px;box-shadow:var(--shadow)}
+  .wbar-name{font-size:16px;font-weight:700;color:var(--g900)}
+  .wbar-sub{font-size:13px;color:var(--g500);margin-top:2px}
+
+  .shdr{margin-bottom:24px}
+  .slabel{font-size:12px;font-weight:600;color:var(--p500);text-transform:uppercase;
+    letter-spacing:.8px;margin-bottom:6px}
+  .stitle{font-size:22px;font-weight:700;color:var(--g900);margin-bottom:6px}
+  .sdesc{font-size:14px;color:var(--g500);line-height:1.6}
+
+  .card{background:var(--white);border-radius:var(--r);padding:24px;border:1px solid var(--g200);
+    box-shadow:var(--shadow);margin-bottom:16px}
+  .card-title{font-size:15px;font-weight:700;color:var(--g900);margin-bottom:16px;
+    display:flex;align-items:center;gap:8px}
+  .card-icon{width:28px;height:28px;background:var(--p100);border-radius:8px;
+    display:flex;align-items:center;justify-content:center;font-size:14px}
+
+  .mode-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:4px}
+  .mode-card{border:2px solid var(--g200);border-radius:var(--r);padding:20px;cursor:pointer;
+    transition:all .18s;text-align:center;background:var(--white)}
+  .mode-card:hover{border-color:var(--p300);background:var(--p50)}
+  .mode-card.sel{border-color:var(--p500);background:var(--p50)}
+  .mc-icon{font-size:28px;margin-bottom:10px}
+  .mc-title{font-size:15px;font-weight:700;color:var(--g900);margin-bottom:4px}
+  .mc-desc{font-size:13px;color:var(--g500);line-height:1.5}
+
+  .tab-row{display:flex;gap:4px;background:var(--g100);border-radius:10px;padding:4px;margin-bottom:16px}
+  .tab-btn{flex:1;padding:9px 0;border:none;border-radius:7px;font-size:13px;font-weight:600;
+    cursor:pointer;background:transparent;color:var(--g500);transition:all .18s;font-family:inherit}
+  .tab-btn.on{background:var(--white);color:var(--p700);box-shadow:0 1px 4px rgba(0,0,0,.08)}
+
+  .upload-area{border:2px dashed var(--p300);border-radius:var(--r);padding:32px 20px;
+    text-align:center;cursor:pointer;transition:all .18s;background:var(--p50)}
+  .upload-area:hover,.upload-area.drag{border-color:var(--p500);background:var(--p100)}
+  .ua-icon{font-size:32px;margin-bottom:10px}
+  .ua-text{font-size:14px;font-weight:600;color:var(--p700);margin-bottom:4px}
+  .ua-sub{font-size:12px;color:var(--g400)}
+  .ua-preview{display:none;margin-top:12px}
+  .ua-preview.on{display:block}
+  .ua-preview img{max-width:100%;max-height:200px;border-radius:8px;border:1px solid var(--p200)}
+  .ua-fname{font-size:13px;color:var(--p600);margin-top:6px;font-weight:500}
+
+  .result-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:8px}
+  .rpanel{background:var(--white);border-radius:var(--r);border:1px solid var(--g200);
+    box-shadow:var(--shadow);overflow:hidden}
+  .rpanel-hdr{padding:14px 20px;border-bottom:1px solid var(--g100);display:flex;
+    align-items:center;justify-content:space-between}
+  .rpanel-title{font-size:14px;font-weight:700;color:var(--g800);display:flex;align-items:center;gap:7px}
+  .dot{width:8px;height:8px;border-radius:50%;display:inline-block}
+  .dot-p{background:var(--p500)}.dot-g{background:#10b981}
+  .rpanel-body{padding:20px;font-size:14px;line-height:1.85;color:var(--g700);
+    white-space:pre-wrap;min-height:160px;max-height:68vh;overflow-y:auto}
+  .char-info{padding:0 20px 14px;font-size:12px;color:var(--g400);text-align:right}
+
+  .citem{display:flex;gap:10px;margin-bottom:13px;padding-bottom:13px;border-bottom:1px solid var(--g100)}
+  .citem:last-child{border-bottom:none;margin-bottom:0;padding-bottom:0}
+  .cnum{min-width:22px;height:22px;background:var(--p100);color:var(--p700);border-radius:6px;
+    font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;
+    margin-top:1px;flex-shrink:0}
+  .ctext{font-size:13px;line-height:1.7;color:var(--g600)}
+
+  .loading{display:none;position:fixed;inset:0;background:rgba(245,243,255,.87);z-index:200;
+    flex-direction:column;align-items:center;justify-content:center;gap:16px}
+  .loading.on{display:flex}
+  .spinner{width:44px;height:44px;border:3px solid var(--p200);border-top-color:var(--p600);
+    border-radius:50%;animation:spin .8s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .loading-text{font-size:15px;font-weight:600;color:var(--p700)}
+  .loading-sub{font-size:13px;color:var(--g400)}
+
+  .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);
+    background:var(--g900);color:var(--white);padding:12px 20px;border-radius:10px;
+    font-size:14px;font-weight:500;opacity:0;transition:all .25s;z-index:300;white-space:nowrap}
+  .toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+
+  @media(max-width:768px){
+    .result-grid,.mode-grid{grid-template-columns:1fr}
+    .wrap{padding:20px 14px}
+    .login-card{padding:36px 24px}
+  }
+</style>
+</head>
+<body>
+
+<header class="hdr">
+  <div class="hdr-logo">✨ 세특 AI 코치</div>
+  <div class="hdr-right">
+    <div class="call-badge" id="callBadge">
+      <div class="call-dot"></div>
+      <span id="callText"></span>
+    </div>
+    <button class="btn btn-g btn-sm" id="btnReset" style="display:none" onclick="resetAll()">새로 시작</button>
+  </div>
+</header>
+
+<div class="loading" id="loading">
+  <div class="spinner"></div>
+  <div class="loading-text" id="loadingText">AI가 세특을 작성 중이에요</div>
+  <div class="loading-sub">잠시만 기다려주세요...</div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- 로그인 -->
+<div id="loginPage" class="login-page">
+  <div class="login-card">
+    <div class="login-icon">✏️</div>
+    <div class="login-title">세특 AI 코치</div>
+    <div class="login-sub">입시 컨설턴트 AI가 세특을 완성해드려요</div>
+    <div class="fg">
+      <label class="fl">학생 코드</label>
+      <input class="fi" id="inputCode" placeholder="코드를 입력하세요" maxlength="20"
+        onkeydown="if(event.key==='Enter')doLogin()">
+    </div>
+    <button class="btn btn-p" onclick="doLogin()">시작하기</button>
+  </div>
+</div>
+
+<!-- 메인 -->
+<div id="mainPage" class="main-page">
+  <div class="wrap">
+
+    <div class="wbar">
+      <div>
+        <div class="wbar-name" id="wName"></div>
+        <div class="wbar-sub">세특 정보를 입력하고 AI 작성을 시작하세요</div>
+      </div>
+    </div>
+
+    <!-- STEP 1 -->
+    <div id="s1">
+      <div class="shdr">
+        <div class="slabel">Step 1</div>
+        <div class="stitle">세특 정보 입력</div>
+        <div class="sdesc">어떤 세특인지, 분량과 진로를 알려주세요.</div>
+      </div>
+      <div class="card">
+        <div class="card-title"><span class="card-icon">📚</span> 세특 기본 정보</div>
+        <div class="fg">
+          <label class="fl">세특 종류</label>
+          <input class="fi" id="inType" placeholder="예: 영어, 수학, 자율활동, 창체(동아리) 등">
+        </div>
+        <div class="fg">
+          <label class="fl">분량 제한</label>
+          <input class="fi" id="inLimit" placeholder="예: 500자, 1500바이트, 200자 이내">
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title"><span class="card-icon">🎯</span> 진로 정보</div>
+        <div class="fg">
+          <label class="fl">희망 진로</label>
+          <input class="fi" id="inCareer" placeholder="예: 경영 컨설턴트, 의사, 교사 등">
+        </div>
+        <div class="fg">
+          <label class="fl">희망 학과</label>
+          <input class="fi" id="inMajor" placeholder="예: 경영학과, 의학과, 교육학과 등">
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title"><span class="card-icon">⚡</span> 작성 방식</div>
+        <div class="mode-grid">
+          <div class="mode-card" id="mRewrite" onclick="chooseMode('rewrite')">
+            <div class="mc-icon">✍️</div>
+            <div class="mc-title">기존 세특 수정</div>
+            <div class="mc-desc">기존에 쓴 세특을 AI가 입시 관점에서 개선해요</div>
+          </div>
+          <div class="mode-card" id="mNew" onclick="chooseMode('new')">
+            <div class="mc-icon">🆕</div>
+            <div class="mc-title">처음부터 작성</div>
+            <div class="mc-desc">활동 내용·수행평가 자료를 주면 AI가 써드려요</div>
+          </div>
+        </div>
+      </div>
+      <button class="btn btn-p" onclick="submitInfo()">다음 단계 →</button>
+    </div>
+
+    <!-- STEP 2 -->
+    <div id="s2" style="display:none">
+      <div class="shdr">
+        <div class="slabel">Step 2</div>
+        <div class="stitle" id="s2title">자료 업로드</div>
+        <div class="sdesc" id="s2desc">텍스트로 입력하거나 사진을 업로드하세요.</div>
+      </div>
+      <div class="card">
+        <div class="tab-row">
+          <button class="tab-btn on" id="tabTxt" onclick="switchTab('txt')">✏️ 텍스트 입력</button>
+          <button class="tab-btn" id="tabImg" onclick="switchTab('img')">📷 사진 업로드</button>
+        </div>
+        <div id="pTxt">
+          <div class="fg">
+            <label class="fl" id="txtLabel">내용 입력</label>
+            <textarea class="fta" id="txtInput" rows="8"
+              placeholder="여기에 입력하세요..." style="min-height:180px"></textarea>
+          </div>
+          <button class="btn btn-p" onclick="submitText()">AI 세특 작성 시작 →</button>
+        </div>
+        <div id="pImg" style="display:none">
+          <div class="upload-area" id="uploadArea"
+            onclick="document.getElementById('fileInput').click()"
+            ondragover="onDragOver(event)" ondragleave="onDragLeave(event)" ondrop="onDrop(event)">
+            <div class="ua-icon">📎</div>
+            <div class="ua-text">클릭하거나 파일을 여기에 드래그하세요</div>
+            <div class="ua-sub">JPG, PNG, WEBP 지원</div>
+            <div class="ua-preview" id="uPreview">
+              <img id="uPreviewImg" src="" alt="">
+              <div class="ua-fname" id="uFname"></div>
+            </div>
+          </div>
+          <input type="file" id="fileInput" accept="image/*" style="display:none" onchange="onFileSelect(event)">
+          <button class="btn btn-p" style="margin-top:14px" onclick="submitImage()">AI 세특 작성 시작 →</button>
+        </div>
+      </div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap">
+        <button class="btn btn-o btn-sm" onclick="goS1()">← 정보 다시 입력</button>
+      </div>
+    </div>
+
+    <!-- STEP 3 -->
+    <div id="s3" style="display:none">
+      <div class="shdr">
+        <div class="slabel">Step 3</div>
+        <div class="stitle">완성된 세특</div>
+        <div class="sdesc">왼쪽에서 세특을 확인하고, 오른쪽에서 작성 포인트를 확인하세요.</div>
+      </div>
+      <div class="result-grid">
+        <div class="rpanel">
+          <div class="rpanel-hdr">
+            <div class="rpanel-title"><span class="dot dot-p"></span> 완성된 세특</div>
+            <button class="btn btn-g btn-sm" onclick="copySetech()">📋 복사</button>
+          </div>
+          <div class="rpanel-body" id="rSetech"></div>
+          <div class="char-info" id="rCharInfo"></div>
+        </div>
+        <div class="rpanel">
+          <div class="rpanel-hdr">
+            <div class="rpanel-title"><span class="dot dot-g"></span> 작성 포인트</div>
+          </div>
+          <div class="rpanel-body" id="rComment"></div>
+        </div>
+      </div>
+      <div style="display:flex;gap:10px;margin-top:16px;flex-wrap:wrap">
+        <button class="btn btn-o btn-sm" onclick="goS2()">← 다시 작성</button>
+        <button class="btn btn-g" onclick="resetAll()">새로 시작</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+const API = 'https://여기에_render_주소.onrender.com'; // ← Render 배포 후 변경
+
+let sessionId    = null;
+let currentMode  = null;
+let uploadedFile = null;
+let infoData     = {};
+
+const $    = id => document.getElementById(id);
+const show = id => $(id).style.display = 'block';
+const hide = id => $(id).style.display = 'none';
+
+function toast(msg, ms = 2800) {
+  const el = $('toast');
+  el.textContent = msg;
+  el.classList.add('on');
+  setTimeout(() => el.classList.remove('on'), ms);
+}
+function showLoading(text = 'AI가 세특을 작성 중이에요') {
+  $('loadingText').textContent = text;
+  $('loading').classList.add('on');
+}
+function hideLoading() { $('loading').classList.remove('on'); }
+
+function updateCallBadge(count, limit) {
+  if (limit > 0) {
+    $('callText').textContent = `${count} / ${limit}회`;
+    $('callBadge').classList.add('on');
+  } else {
+    $('callBadge').classList.remove('on');
+  }
+}
+
+async function doLogin() {
+  const code = $('inputCode').value.trim();
+  if (!code) return toast('코드를 입력해주세요');
+  showLoading('로그인 중...');
+  try {
+    const res  = await fetch(`${API}/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ student_code: code })
+    });
+    const data = await res.json();
+    hideLoading();
+    if (!res.ok) return toast(data.detail || '등록되지 않은 코드예요');
+    sessionId = data.session_id;
+    updateCallBadge(data.call_count, data.call_limit);
+    $('wName').textContent = `${data.name} (${data.grade}학년)`;
+    $('loginPage').classList.add('hide');
+    $('mainPage').classList.add('on');
+    $('btnReset').style.display = '';
+  } catch (e) { hideLoading(); toast('서버 연결에 실패했어요'); }
+}
+
+function chooseMode(mode) {
+  currentMode = mode;
+  $('mRewrite').classList.toggle('sel', mode === 'rewrite');
+  $('mNew').classList.toggle('sel', mode === 'new');
+}
+
+function submitInfo() {
+  const type   = $('inType').value.trim();
+  const limit  = $('inLimit').value.trim();
+  const career = $('inCareer').value.trim();
+  const major  = $('inMajor').value.trim();
+  if (!type)        return toast('세특 종류를 입력해주세요');
+  if (!limit)       return toast('분량 제한을 입력해주세요');
+  if (!career)      return toast('희망 진로를 입력해주세요');
+  if (!major)       return toast('희망 학과를 입력해주세요');
+  if (!currentMode) return toast('작성 방식을 선택해주세요');
+
+  infoData = {
+    setech_type: type, char_limit: limit,
+    desired_career: career, desired_major: major, mode: currentMode
+  };
+
+  if (currentMode === 'rewrite') {
+    $('s2title').textContent  = '기존 세특 업로드';
+    $('s2desc').textContent   = '기존에 작성된 세특을 텍스트로 입력하거나 사진으로 업로드하세요.';
+    $('txtLabel').textContent = '기존 세특 내용';
+    $('txtInput').placeholder = '기존 세특을 여기에 붙여넣기 하세요...';
+  } else {
+    $('s2title').textContent  = '활동 자료 업로드';
+    $('s2desc').textContent   = '수행평가 결과물, 활동 내용, 소감문 등을 입력하거나 사진으로 업로드하세요.';
+    $('txtLabel').textContent = '활동 내용';
+    $('txtInput').placeholder = '수행평가 내용, 활동 소감, 프로젝트 결과 등을 입력하세요...';
+  }
+  hide('s1'); show('s2');
+}
+
+function goS1() { hide('s2'); show('s1'); }
+function goS2() { hide('s3'); show('s2'); }
+
+function switchTab(tab) {
+  $('tabTxt').classList.toggle('on', tab === 'txt');
+  $('tabImg').classList.toggle('on', tab === 'img');
+  $('pTxt').style.display = tab === 'txt' ? 'block' : 'none';
+  $('pImg').style.display = tab === 'img' ? 'block' : 'none';
+}
+
+function onDragOver(e)   { e.preventDefault(); $('uploadArea').classList.add('drag'); }
+function onDragLeave()   { $('uploadArea').classList.remove('drag'); }
+function onDrop(e)       { e.preventDefault(); $('uploadArea').classList.remove('drag'); if (e.dataTransfer.files[0]) setFile(e.dataTransfer.files[0]); }
+function onFileSelect(e) { if (e.target.files[0]) setFile(e.target.files[0]); }
+function setFile(file) {
+  uploadedFile = file;
+  const r = new FileReader();
+  r.onload = ev => {
+    $('uPreviewImg').src = ev.target.result;
+    $('uFname').textContent = file.name;
+    $('uPreview').classList.add('on');
+  };
+  r.readAsDataURL(file);
+}
+
+async function submitText() {
+  const content = $('txtInput').value.trim();
+  if (!content) return toast('내용을 입력해주세요');
+  showLoading('AI가 세특을 작성 중이에요');
+  try {
+    const res = await fetch(`${API}/generate-text`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ session_id: sessionId, ...infoData, content })
+    });
+    const data = await res.json();
+    hideLoading();
+    if (!res.ok) return toast(data.detail || '오류가 발생했어요');
+    showResult(data);
+  } catch (e) { hideLoading(); toast('서버 연결에 실패했어요'); }
+}
+
+async function submitImage() {
+  if (!uploadedFile) return toast('파일을 업로드해주세요');
+  showLoading('AI가 이미지를 분석 중이에요');
+  const form = new FormData();
+  form.append('session_id',     sessionId);
+  form.append('setech_type',    infoData.setech_type);
+  form.append('char_limit',     infoData.char_limit);
+  form.append('desired_career', infoData.desired_career);
+  form.append('desired_major',  infoData.desired_major);
+  form.append('mode',           infoData.mode);
+  form.append('image',          uploadedFile);
+  try {
+    const res  = await fetch(`${API}/generate-image`, { method: 'POST', body: form });
+    const data = await res.json();
+    hideLoading();
+    if (!res.ok) return toast(data.detail || '오류가 발생했어요');
+    showResult(data);
+  } catch (e) { hideLoading(); toast('서버 연결에 실패했어요'); }
+}
+
+function showResult(data) {
+  updateCallBadge(data.call_count, data.call_limit);
+  hide('s2'); show('s3');
+  const setech = data.setech || '';
+  $('rSetech').textContent   = setech;
+  $('rCharInfo').textContent = `${setech.length}자 / ${new Blob([setech]).size}바이트`;
+  renderComment(data.comment || '');
+}
+
+function renderComment(text) {
+  const el = $('rComment');
+  if (!text) { el.textContent = ''; return; }
+  const lines = text.split('\n').filter(l => l.trim());
+  const items = [];
+  let cur = null;
+  for (const line of lines) {
+    const m = line.match(/^(\d+)[.)]\s+(.+)/);
+    if (m) {
+      if (cur) items.push(cur);
+      cur = { n: m[1], t: m[2] };
+    } else if (cur) {
+      cur.t += ' ' + line.trim();
+    } else {
+      items.push({ n: '·', t: line.trim() });
+    }
+  }
+  if (cur) items.push(cur);
+  if (!items.length) { el.textContent = text; return; }
+  el.innerHTML = items.map(i =>
+    `<div class="citem"><div class="cnum">${i.n}</div><div class="ctext">${i.t}</div></div>`
+  ).join('');
+}
+
+function copySetech() {
+  navigator.clipboard.writeText($('rSetech').textContent)
+    .then(() => toast('세특이 복사됐어요 ✓'));
+}
+
+function resetAll() {
+  sessionId    = null;
+  currentMode  = null;
+  uploadedFile = null;
+  infoData     = {};
+  ['inputCode', 'inType', 'inLimit', 'inCareer', 'inMajor', 'txtInput']
+    .forEach(id => $(id).value = '');
+  $('mRewrite').classList.remove('sel');
+  $('mNew').classList.remove('sel');
+  $('uPreview').classList.remove('on');
+  $('uPreviewImg').src = '';
+  $('fileInput').value = '';
+  $('tabTxt').classList.add('on');
+  $('tabImg').classList.remove('on');
+  $('pTxt').style.display = 'block';
+  $('pImg').style.display = 'none';
+  $('loginPage').classList.remove('hide');
+  $('mainPage').classList.remove('on');
+  show('s1'); hide('s2'); hide('s3');
+  $('btnReset').style.display = 'none';
+  $('callBadge').classList.remove('on');
+}
+</script>
+</body>
+</html>
